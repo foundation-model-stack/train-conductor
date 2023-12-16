@@ -1,0 +1,19 @@
+trainer_type: K8S_JOB_TRAIN
+import_class: train_conductor.modules.k8s_backend.K8sJobTrainModule
+trainer_config:
+  target_namespace: "fmaas-dev"
+  save_with_id: true
+  output_dir: /tmp/train_conductor
+  tuning_image: us.icr.io/cil15-shared-registry/sft-trainer:tc-17
+  image_pull_secrets: all-icr-io
+  default_resources:
+    cpu: 1
+    gpu: 0
+datastore:
+  type: redis
+  helper_class: RedisHelper
+  helper_module_path: train_conductor.plugins.redis
+  connection:
+    host: localhost
+    port: 6379
+    db_num: 0
