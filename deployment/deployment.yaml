@@ -1,0 +1,103 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: train-conductor
+  namespace: fmaas-dev
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: fmaas-dev
+  name: train-conductor-role
+rules:
+- apiGroups: ["batch", ""]
+  resources: ["jobs"]
+  verbs: ["create", "get", "list", "watch", "delete"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: train-conductor-role-binding
+  namespace: fmaas-dev
+subjects:
+- kind: ServiceAccount
+  name: train-conductor
+  namespace: fmaas-dev
+roleRef:
+  kind: Role
+  name: train-conductor-role
+  apiGroup: rbac.authorization.k8s.io
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: train-conductor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: train-conductor
+  template:
+    metadata:
+      labels:
+        app: train-conductor
+    spec:
+      volumes:
+        - name: config-volume
+          configMap:
+            name: train-conductor-config
+        - name: redis-storage
+          persistentVolumeClaim:
+            claimName: cos-ray-test
+        - name: redis-cert
+          secret:
+            secretName: redis-secret
+            items:
+            - key: client_cert
+              path: client_cert.pem
+      serviceAccountName: train-conductor
+      imagePullSecrets:
+      - name: all-icr-io
+      containers:
+      - name: train-conductor
+        image: us.icr.io/cil15-shared-registry/train-conductor:30
+        env:
+        - name: RUNTIME_CONFIG_FILE
+          value: /etc/config/config.yaml
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: redis-secret
+              key: password
+        - name: REDIS_CA_FILE
+          value: /etc/cert/client_cert.pem
+        volumeMounts:
+        - name: config-volume
+          mountPath: /etc/config
+        - name: redis-cert
+          mountPath: /etc/cert
+          readOnly: true
+      - name: redis
+        image: redis
+        ports:
+        - containerPort: 6379
+        volumeMounts:
+          - mountPath: "/data"
+            name: redis-storage
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: train-conductor-service
+  namespace: fmaas-dev
+spec:
+  selector:
+    app: train-conductor
+  ports:
+    - protocol: TCP
+      port: 8085
+      targetPort: 8085
