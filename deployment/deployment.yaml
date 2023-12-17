@@ -13,7 +13,7 @@ metadata:
 rules:
 - apiGroups: ["batch", ""]
   resources: ["jobs"]
-  verbs: ["create", "get", "list", "watch", "delete"]
+  verbs: ["create", "get", "list", "watch", "delete", "patch"]
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -36,7 +36,7 @@ kind: Deployment
 metadata:
   name: train-conductor
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     matchLabels:
       app: train-conductor
@@ -49,9 +49,6 @@ spec:
         - name: config-volume
           configMap:
             name: train-conductor-config
-        - name: redis-storage
-          persistentVolumeClaim:
-            claimName: cos-ray-test
         - name: redis-cert
           secret:
             secretName: redis-secret
@@ -63,23 +60,146 @@ spec:
       - name: all-icr-io
       containers:
       - name: train-conductor
-        image: us.icr.io/cil15-shared-registry/train-conductor:30
+        image: us.icr.io/cil15-shared-registry/train-conductor:0.8
         env:
         - name: RUNTIME_CONFIG_FILE
           value: /etc/config/config.yaml
-        - name: REDIS_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: redis-secret
-              key: password
-        - name: REDIS_CA_FILE
-          value: /etc/cert/client_cert.pem
+#        - name:
+#        - name: REDIS_PASSWORD
+#          valueFrom:
+#            secretKeyRef:
+#             name: redis-secret
+#              key: password
+#        - name: REDIS_CA_FILE
+#          value: /etc/cert/client_cert.pem
         volumeMounts:
         - name: config-volume
           mountPath: /etc/config
         - name: redis-cert
           mountPath: /etc/cert
           readOnly: true
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: train-conductor-grpc
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: train-conductor
+  template:
+    metadata:
+      labels:
+        app: train-conductor
+    spec:
+      volumes:
+        - name: config-volume
+          configMap:
+            name: train-conductor-config
+        - name: redis-cert
+          secret:
+            secretName: redis-secret
+            items:
+            - key: client_cert
+              path: client_cert.pem
+      imagePullSecrets:
+      - name: all-icr-io
+      containers:
+      - name: train-conductor
+        image: us.icr.io/cil15-shared-registry/train-conductor:0.10
+        env:
+        - name: RUNTIME_CONFIG_FILE
+          value: /etc/config/config.yaml
+        - name: DISABLE_WATCHER
+          value: "true"
+#        - name:
+#        - name: REDIS_PASSWORD
+#          valueFrom:
+#            secretKeyRef:
+#             name: redis-secret
+#              key: password
+#        - name: REDIS_CA_FILE
+#          value: /etc/cert/client_cert.pem
+        volumeMounts:
+        - name: config-volume
+          mountPath: /etc/config
+        - name: redis-cert
+          mountPath: /etc/cert
+          readOnly: true
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: train-conductor-watcher
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: train-conductor-watcher
+  template:
+    metadata:
+      labels:
+        app: train-conductor-watcher
+    spec:
+      volumes:
+        - name: config-volume
+          configMap:
+            name: train-conductor-config
+        - name: redis-cert
+          secret:
+            secretName: redis-secret
+            items:
+            - key: client_cert
+              path: client_cert.pem
+      serviceAccountName: train-conductor
+      imagePullSecrets:
+      - name: all-icr-io
+      containers:
+      - name: train-conductor
+        image: us.icr.io/cil15-shared-registry/train-conductor:0.10
+        env:
+        - name: RUNTIME_CONFIG_FILE
+          value: /etc/config/config.yaml
+        - name: DISABLE_GRPC
+          value: "true"
+#        - name:
+#        - name: REDIS_PASSWORD
+#          valueFrom:
+#            secretKeyRef:
+#             name: redis-secret
+#              key: password
+#        - name: REDIS_CA_FILE
+#          value: /etc/cert/client_cert.pem
+        volumeMounts:
+        - name: config-volume
+          mountPath: /etc/config
+        - name: redis-cert
+          mountPath: /etc/cert
+          readOnly: true
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: train-conductor-redis
+  template:
+    metadata:
+      labels:
+        app: train-conductor-redis
+    spec:
+      volumes:
+        - name: redis-storage
+          persistentVolumeClaim:
+            claimName: cos-ray-test
+      containers:
       - name: redis
         image: redis
         ports:
@@ -101,3 +221,17 @@ spec:
     - protocol: TCP
       port: 8085
       targetPort: 8085
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-service
+  namespace: fmaas-dev
+spec:
+  selector:
+    app: train-conductor-redis
+  ports:
+    - protocol: TCP
+      port: 6379
+      targetPort: 6379

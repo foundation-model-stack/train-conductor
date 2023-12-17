@@ -20,8 +20,8 @@ data:
       helper_class: RedisHelper
       helper_module_path: train_conductor.plugins.redis
       connection:
-        host: ide593829-f25e-47d1-9a59-90c2424beec5.blrrvkdw0thh68l98t20.databases.appdomain.cloud
-        port: 30244
+        host: redis-service
+        port: 6379
         db_num: 0
-        user: ibm_cloud_1fd51853_d76d_474c_8623_36308061da32
+        user: ""
 
