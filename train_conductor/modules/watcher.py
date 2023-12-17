@@ -235,7 +235,6 @@ class Watcher:
         except Exception as e:
             logging.error("Unable to delete job will try again later " + job_id + " Error: " + str(e))
 
-
     def k8s_job_status_to_enum(self, k8s_job_status):
         job_status = TrainingStatus.QUEUED
         if k8s_job_status.start_time:

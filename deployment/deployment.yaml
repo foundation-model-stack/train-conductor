@@ -12,8 +12,8 @@ metadata:
   name: train-conductor-role
 rules:
 - apiGroups: ["batch", ""]
-  resources: ["jobs"]
   verbs: ["create", "get", "list", "watch", "delete", "patch"]
+
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -29,55 +29,6 @@ roleRef:
   kind: Role
   name: train-conductor-role
   apiGroup: rbac.authorization.k8s.io
-
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: train-conductor
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: train-conductor
-  template:
-    metadata:
-      labels:
-        app: train-conductor
-    spec:
-      volumes:
-        - name: config-volume
-          configMap:
-            name: train-conductor-config
-        - name: redis-cert
-          secret:
-            secretName: redis-secret
-            items:
-            - key: client_cert
-              path: client_cert.pem
-      serviceAccountName: train-conductor
-      imagePullSecrets:
-      - name: all-icr-io
-      containers:
-      - name: train-conductor
-        image: us.icr.io/cil15-shared-registry/train-conductor:0.8
-        env:
-        - name: RUNTIME_CONFIG_FILE
-          value: /etc/config/config.yaml
-#        - name:
-#        - name: REDIS_PASSWORD
-#          valueFrom:
-#            secretKeyRef:
-#             name: redis-secret
-#              key: password
-#        - name: REDIS_CA_FILE
-#          value: /etc/cert/client_cert.pem
-        volumeMounts:
-        - name: config-volume
-          mountPath: /etc/config
-        - name: redis-cert
-          mountPath: /etc/cert
-          readOnly: true
 
 ---
 apiVersion: apps/v1
