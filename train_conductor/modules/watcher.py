@@ -92,6 +92,7 @@ class Watcher:
             db_entry = self.db_client.read_record(job_id)
 
         if not db_entry:
+            logging.info("Job exists in kubernetes but not database. Deleting " + job_id)
             self.delete_job(job_id=job_id, job_name=self.generate_k8s_job_name(job_id), namespace=self.target_namespace)
 
         db_state = db_entry.get("status")
@@ -119,7 +120,7 @@ class Watcher:
                     params = db_entry.get("parameters")
                     if params:
                         try:
-                            env_vars=json.loads(env_vars)
+                            env_vars=json.loads(params)
                         except:
                             logging.error("Could not load env vars for job " + job_id)
                     self.create_job(
@@ -154,8 +155,7 @@ class Watcher:
         if (actual_state in COMPLETED_STATES and not db_entry.get("deleted")
         ):
             logging.info("Job has compelted, deleting from k8s " + job_id)
-            namespace = self.db_client.read_field(job_id, "namespace")
-            self.delete_job(job_id, k8s_entry.metadata.name, namespace)
+            self.delete_job(job_id, k8s_entry.metadata.name, self.target_namespace)
 
 
     def monitor_jobs(self, resource_version):
@@ -232,8 +232,8 @@ class Watcher:
             self.batch_v1_api.delete_namespaced_job(name=job_name, namespace=namespace)
             logging.info("Deleted job for id " + job_id)
             self.db_client.write_field(job_id, "deleted", "1")
-        except:
-            logging.error("Unable to delete job will try again later " + job_id)
+        except Exception as e:
+            logging.error("Unable to delete job will try again later " + job_id + " Error: " + str(e))
 
     def k8s_job_status_to_enum(self, k8s_job_status):
         job_status = TrainingStatus.QUEUED

@@ -17,6 +17,7 @@ import logging
 import sys
 import os
 from concurrent import futures
+import urllib3
 
 
 # First Party
@@ -39,24 +40,27 @@ class TrainingGRPCServer:
     def __init__(self, config_path: str):
         self.config = Config.from_yaml(config_path)
 
-        # Start tracking service names for reflection
-        service_names = [reflection.SERVICE_NAME]
+        if not os.environ.get("DISABLE_GRPC"):
+            # Start tracking service names for reflection
+            service_names = [reflection.SERVICE_NAME]
 
-        self.server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
+            self.server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
 
-        trainconductor_pb2_grpc.add_TrainConductorServicer_to_server(
-            TrainingServicer(self.config), self.server
-        )
-        service_names.append(
-            trainconductor_pb2.DESCRIPTOR.services_by_name["TrainConductor"].full_name
-        )
+            trainconductor_pb2_grpc.add_TrainConductorServicer_to_server(
+                TrainingServicer(self.config), self.server
+            )
+            service_names.append(
+                trainconductor_pb2.DESCRIPTOR.services_by_name["TrainConductor"].full_name
+            )
 
-        # Finally enable service reflection after all services are added
-        reflection.enable_server_reflection(service_names, self.server)
+            # Finally enable service reflection after all services are added
+            reflection.enable_server_reflection(service_names, self.server)
 
-        self.server.add_insecure_port("[::]:8085")
-        self.server.start()
-        Watcher(self.config)
+            self.server.add_insecure_port("[::]:8085")
+            self.server.start()
+
+        if not os.environ.get("DISABLE_WATCHER"):
+            Watcher(self.config)
         self.server.wait_for_termination()
 
 
@@ -74,4 +78,6 @@ if __name__ == "__main__":
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     handler.setFormatter(formatter)
     root.addHandler(handler)
-    TrainingGRPCServer("runtime_config.yml")
+    # TODO: Hack to supress certificate check warnings. Needs fixing.
+    urllib3.disable_warnings()
+    TrainingGRPCServer(config_file)

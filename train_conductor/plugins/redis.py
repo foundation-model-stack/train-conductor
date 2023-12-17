@@ -37,7 +37,6 @@ class RedisHelper(DatabaseBase):
         redis_db_num = redis_config.db_num
         type_check("<TCD47773354E>", int, redis_db_num=redis_db_num)
         user = redis_config.user or None
-        print(user)
         password = os.environ.get("REDIS_PASSWORD")
         ca_cert = os.environ.get("REDIS_CA_FILE")
         if ca_cert:
