@@ -12,6 +12,7 @@ metadata:
   name: train-conductor-role
 rules:
 - apiGroups: ["batch", ""]
+  resources: ["jobs"]
   verbs: ["create", "get", "list", "watch", "delete", "patch"]
 
 
