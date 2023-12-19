@@ -111,7 +111,8 @@ class Watcher:
                 logging.info("Job not found in k8s " + job_id)
                 if db_state in COMPLETED_STATES:
                     logging.info("Job already completed " + job_id + " = " + db_state.name)
-                    self.db_client.write_field(job_id, "deleted", "1")
+                    if not db_entry.get("deleted"):
+                        self.db_client.write_field(job_id, "deleted", "1")
                     return
                 else:
                     logging.info("Current job state for job " + job_id + ": " + db_state.name)
@@ -269,10 +270,30 @@ class Watcher:
     ):
         job_name = self.generate_k8s_job_name(job_id)
 
+        # Define mounted volumes
+        volumes = []
+        volume_mounts = []
+        for volume in self.config.training_volumes:
+            error.type_check("<TCD37116630E>", str, volume_name=volume.name)
+            error.type_check("<TCD24985933E>", str, pvc=volume.pvc_name)
+            error.type_check("<TCD48967099E>", str, mount_path=volume.mount_path)
+            volumes.append(client.V1Volume(
+                            name=volume.name,
+                            persistent_volume_claim=client.V1PersistentVolumeClaimVolumeSource(
+                                claim_name=volume.pvc_name
+                            ))
+            )
+            volume_mounts.append(client.V1VolumeMount(
+                                    name=volume.name,
+                                    mount_path=volume.mount_path
+                                )
+            )
+
         # Define the container to run
         env_var_string = self._obj_to_txt(env_vars)
         container = client.V1Container(
             name=container_name,
+            volume_mounts=volume_mounts,
             image=image,
             env=[
                 client.V1EnvVar(name="JOB_CONFIG_JSON_ENV_VAR", value=env_var_string),
@@ -282,10 +303,12 @@ class Watcher:
             command=["python", "/app/launch_training.py"],
         )
 
+
         # Define the Job template
         template = client.V1PodTemplateSpec(
             metadata=client.V1ObjectMeta(labels={"app": app, "job_id": job_id}),
-            spec=client.V1PodSpec(restart_policy="Never", containers=[container], image_pull_secrets=[{"name" : image_pull_secrets}]),
+            spec=client.V1PodSpec(restart_policy="Never", containers=[container],
+                                  volumes=volumes, image_pull_secrets=[{"name" : image_pull_secrets}]),
         )
 
         # Define the Job spec
