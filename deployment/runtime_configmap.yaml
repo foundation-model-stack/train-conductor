@@ -7,14 +7,21 @@ data:
     trainer_type: K8S_JOB_TRAIN
     import_class: train_conductor.modules.k8s_backend.K8sJobTrainModule
     trainer_config:
-      target_namespace: "fmaas-dev"
+      target_namespace: "default"
       save_with_id: true
-      output_dir: /tmp/train_conductor
-      tuning_image: us.icr.io/cil15-shared-registry/sft-trainer:tc-17
+      output_dir: /data/output
+      tuning_image: sft-trainer
       image_pull_secrets: all-icr-io
       default_resources:
         cpu: 1
         gpu: 1
+    training_volumes:
+      - name: input-data
+        pvc_name: cos-ray-output
+        mount_path: /data/input
+      - name: output-data
+        pvc_name: cos-ray-test
+        mount_path: /data/output
     datastore:
       type: redis
       helper_class: RedisHelper
