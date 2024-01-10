@@ -18,6 +18,7 @@ import threading
 import base64
 import pickle
 import logging
+import time
 from enum import Enum
 
 # Third Party
@@ -77,12 +78,27 @@ class Watcher:
 
         self.batch_v1_api = client.BatchV1Api()
         resource_version = self.full_reconcile()
+
+        # Start DB listener thread
         self._db_listener_thread = threading.Thread(
             target=self.db_client.start_listener(self.db_update_event_handler)
         )
         self._db_listener_thread.start()
+
+        # Start Full reconcile thread
+        self._reconcile_interval = config.get("trainer_config.reconcile_interval") or 30
+        self._reconcile_thread = threading.Thread(
+            target=self.start_full_reconcile_task(self._reconcile_interval)
+        )
+        self._reconcile_thread.start()
+
+        # Start Watching K8s
         while True:
             self.monitor_jobs(resource_version)
+
+    def start_full_reconcile_task(self, interval):
+        time.sleep(interval)
+        self.full_reconcile()
 
     def reconcile_state(self, job_id: str, db_entry: dict, k8s_entry: V1Job):
         """
@@ -188,6 +204,7 @@ class Watcher:
             resource_version = self.full_reconcile()
         except Exception as e:
             # Just log other errors
+            logging.error("Exception in watch")
             logging.error(e)
 
     def full_reconcile(self):
