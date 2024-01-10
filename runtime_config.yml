@@ -24,3 +24,4 @@ datastore:
     host: localhost
     port: 6379
     db_num: 0
+    user: ""

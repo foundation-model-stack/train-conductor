@@ -79,7 +79,6 @@ class RedisHelper(DatabaseBase):
             thread.stop()
 
         pubsub = self._client.pubsub()
-        self._client.config_set("notify-keyspace-events", "KEA")
         pubsub.psubscribe(**{"__keyspace@0__:*": db_update_event_handler})
         pubsub.psubscribe(**{"__keyevent@0__:expired": exit_event_handler})
         thread = pubsub.run_in_thread(sleep_time=0.01)
