@@ -48,7 +48,7 @@ class TrainingServicer(trainconductor_pb2_grpc.TrainConductorServicer):
         """Fine-tune a model using HF SFT Trainer"""
         try:
             job_id = str(uuid4())
-            request_dict = MessageToDict(request)
+            request_dict = MessageToDict(request, preserving_proto_field_name=True)
             param_dict = request_dict.get("parameters")
             param_dict["output_dir"] = request_dict.get("output_path") or self.config.trainer_config.output_dir
             params = json.dumps(param_dict, indent=4)
@@ -58,7 +58,7 @@ class TrainingServicer(trainconductor_pb2_grpc.TrainConductorServicer):
             )
             self.db_client.write_record(job_id, request_dict)
             return TrainingJob(
-                training_id=job_id, model_name=request_dict.get("modelName")
+                training_id=job_id, model_name=request_dict.get("model_name")
             )
         except Exception as err:
             raise Exception("Unhandled exception during training") from err
