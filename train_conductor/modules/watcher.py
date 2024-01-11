@@ -108,8 +108,9 @@ class Watcher:
             self.monitor_jobs(resource_version)
 
     def start_full_reconcile_task(self, interval):
-        time.sleep(interval)
-        self.full_reconcile()
+        while True:
+            time.sleep(interval)
+            self.full_reconcile()
 
     def reconcile_state(self, job_id: str, db_entry: dict, k8s_entry: V1Job):
         """
@@ -180,7 +181,7 @@ class Watcher:
         actual_state = self.k8s_job_status_to_enum(k8s_state)
         if db_state != actual_state:
             logging.info(
-                "Actual state {} does not match state in database {} for job".format(
+                "Actual state {} does not match state in database {} for job {}".format(
                     actual_state.name, db_state.name, job_id
                 )
             )
@@ -201,6 +202,9 @@ class Watcher:
             self.delete_job(job_id, k8s_entry.metadata.name, self.target_namespace)
 
     def monitor_jobs(self, resource_version):
+        """
+        Function for keeping watch on events in Kubernetes, and reconciling each change
+        """
         try:
             w = watch.Watch()
             for event in w.stream(
@@ -230,6 +234,16 @@ class Watcher:
             logging.error("Exception in watch")
             logging.error(e)
 
+    def scan_db_entries(self):
+        """
+        Utility for fetching multiple keys and values from the database at once
+        """
+        cursor = "0"
+        while cursor != 0:
+            cursor, keys = self.db_client.iterate_entries(cursor=cursor)
+            values = self.db_client.read_many_entries(keys)
+            yield from values.items()
+
     def full_reconcile(self):
         logging.info("Beginning full reconcile")
         job_list = self.batch_v1_api.list_namespaced_job(
@@ -241,17 +255,9 @@ class Watcher:
         for job in current_jobs:
             job_dict[job.metadata.labels.get("job_id")] = job
 
-        cursor = "0"
-        while cursor != 0:
-            cursor, keys = self.db_client.iterate_entries(cursor=cursor)
-            for job_id in keys:
-                # !!! This fetching from the DB one at a time is wildy inefficient
-                # I was attempting to use mget on Redis but ran into issues
-                # TODO: Investigate why mget was returning None
-                db_record = self.db_client.read_record(job_id)
-                status = db_record.get("status") or ""
-                logging.info("Evaluating job " + job_id + " with status " + status)
-                self.reconcile_state(job_id, db_record, job_dict.pop(job_id, None))
+        for job_id, db_entry in self.scan_db_entries():
+            logging.info("Evaluating job " + job_id + " with status " + db_entry.get("status"))
+            self.reconcile_state(job_id, db_entry, job_dict.pop(job_id, None))
 
         # Jobs in K8s that are not not in DB
         for job_id, job in job_dict.items():
@@ -311,6 +317,8 @@ class Watcher:
     ):
         job_name = self.generate_k8s_job_name(job_id)
 
+        job_timeout = self.config.trainer_config.job_time_limit or 0
+
         # Define mounted volumes
         volumes = []
         volume_mounts = []
@@ -360,6 +368,7 @@ class Watcher:
         job_spec = client.V1JobSpec(
             template=template,
             backoff_limit=backoff_limit,  # Number of retries before considering the Job as failed
+            active_deadline_seconds=job_timeout,
         )
 
         # Define the Job
