@@ -33,8 +33,6 @@ from train_conductor.training_servicer import TrainingServicer
 from train_conductor.modules.watcher import Watcher
 from train_conductor.utils import error_check
 
-# TPP TODO: validate params before writing to db
-
 
 class TrainingGRPCServer:
     def __init__(self, config_path: str):
@@ -50,13 +48,17 @@ class TrainingGRPCServer:
                 TrainingServicer(self.config), self.server
             )
             service_names.append(
-                trainconductor_pb2.DESCRIPTOR.services_by_name["TrainConductor"].full_name
+                trainconductor_pb2.DESCRIPTOR.services_by_name[
+                    "TrainConductor"
+                ].full_name
             )
 
             # Finally enable service reflection after all services are added
             reflection.enable_server_reflection(service_names, self.server)
 
             self.server.add_insecure_port("[::]:8085")
+            logging.info("Starting grpc server on port 8085")
+
             self.server.start()
 
         if not os.environ.get("DISABLE_WATCHER"):
@@ -75,7 +77,9 @@ if __name__ == "__main__":
 
     handler = logging.StreamHandler(sys.stdout)
     handler.setLevel(logging.INFO)
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
     handler.setFormatter(formatter)
     root.addHandler(handler)
     # TODO: Hack to supress certificate check warnings. Needs fixing.

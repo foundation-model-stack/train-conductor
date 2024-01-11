@@ -33,7 +33,7 @@ class RedisHelper(DatabaseBase):
         redis_host = redis_config.host
         type_check("<TCD47773352E>", str, redis_host=redis_host)
         redis_port = redis_config.port
-        type_check("<TCD47773353E>",int, redis_port=redis_port)
+        type_check("<TCD47773353E>", int, redis_port=redis_port)
         redis_db_num = redis_config.db_num
         type_check("<TCD47773354E>", int, redis_db_num=redis_db_num)
         user = redis_config.user or None
@@ -45,16 +45,24 @@ class RedisHelper(DatabaseBase):
         if ca_cert:
             ssl_enable = True
         self._client = redis.Redis(
-            host=redis_host, port=redis_port, db=redis_db_num, decode_responses=True,
-            username=user, password=password, ssl_ca_certs=ca_cert, ssl=ssl_enable
+            host=redis_host,
+            port=redis_port,
+            db=redis_db_num,
+            decode_responses=True,
+            username=user,
+            password=password,
+            ssl_ca_certs=ca_cert,
+            ssl=ssl_enable,
         )
 
     def write_record(self, key: str, record: dict) -> int:
         added_fields = self._client.hset(key, mapping=record)
+        self.publish_data(key)
         return added_fields
 
     def write_field(self, key: str, field: str, value):
         added_fields = self._client.hset(key, field, value)
+        self.publish_data(key)
         return added_fields
 
     def read_record(self, key: str) -> dict:
@@ -73,12 +81,19 @@ class RedisHelper(DatabaseBase):
     def read_many_entries(self, keys):
         return self._client.mget(keys)
 
-    def start_listener(self, db_update_event_handler):
-        def exit_event_handler(msg):
-            print(msg)
-            thread.stop()
+    def publish_data(self, key):
+        self._client.publish("train_conductor", str(key))
 
+    def start_listener(self, db_update_event_handler):
         pubsub = self._client.pubsub()
-        pubsub.psubscribe(**{"__keyspace@0__:*": db_update_event_handler})
-        pubsub.psubscribe(**{"__keyevent@0__:expired": exit_event_handler})
-        thread = pubsub.run_in_thread(sleep_time=0.01)
+        pubsub.psubscribe(**{"train_conductor": db_update_event_handler})
+
+        def exception_handler(ex, pubsub, thread):
+            logging.error(ex)
+            thread.stop()
+            thread.join(timeout=1.0)
+            pubsub.close()
+
+        thread = pubsub.run_in_thread(
+            sleep_time=0.01, exception_handler=exception_handler
+        )
