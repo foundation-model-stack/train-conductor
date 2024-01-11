@@ -9,6 +9,7 @@ trainer_config:
   default_resources:
     cpu: 1
     gpu: 0
+  reconcile_interval: 30
 training_volumes:
   - name: input-data
     pvc_name: cos-ray-test
