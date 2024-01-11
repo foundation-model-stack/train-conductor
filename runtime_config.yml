@@ -6,14 +6,10 @@ trainer_config:
   output_dir: /data/output
   tuning_image: sft-trainer
   image_pull_secrets: all-icr-io
-  # Default resource allocation for a job, if unspecified
   default_resources:
     cpu: 1
     gpu: 0
-  # How often full reconciles should run, in seconds
   reconcile_interval: 30
-  # Time limit on job runs, in seconds. If >0, job will be terminated if not completed in time.
-  job_time_limit: 28800
 training_volumes:
   - name: input-data
     pvc_name: cos-ray-test
@@ -29,4 +25,3 @@ datastore:
     host: localhost
     port: 6379
     db_num: 0
-    user: ""
