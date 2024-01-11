@@ -270,10 +270,9 @@ class Watcher:
 
     def delete_job(self, job_id, job_name, namespace):
         try:
-            self.batch_v1_api.patch_namespaced_job(
-                name=job_name, namespace=namespace, body={"spec": {"suspend": True}}
-            )
-            self.batch_v1_api.delete_namespaced_job(name=job_name, namespace=namespace)
+            # This delete option makes sure that pods belonging to the job get deleted as well, asynchronously
+            delete_options = client.V1DeleteOptions(propagation_policy='Background')
+            self.batch_v1_api.delete_namespaced_job(name=job_name, namespace=namespace, body=delete_options)
             logging.info("Deleted job for id " + job_id)
             self.db_client.write_field(job_id, "deleted", "1")
         except Exception as e:
