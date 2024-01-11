@@ -50,7 +50,9 @@ class TrainingServicer(trainconductor_pb2_grpc.TrainConductorServicer):
             job_id = str(uuid4())
             request_dict = MessageToDict(request, preserving_proto_field_name=True)
             param_dict = request_dict.get("parameters")
-            param_dict["output_dir"] = request_dict.get("output_path") or self.config.trainer_config.output_dir
+            param_dict["output_dir"] = (
+                request_dict.get("output_path") or self.config.trainer_config.output_dir
+            )
             params = json.dumps(param_dict, indent=4)
             request_dict.pop("parameters")
             request_dict.update(

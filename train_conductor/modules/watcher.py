@@ -33,6 +33,7 @@ import aconfig
 from train_conductor.utils import error_check as error
 from train_conductor.plugins.redis import RedisHelper
 
+
 class TrainingStatus(Enum):
     PLACEHOLDER_UNSET = 0
     PENDING = 1
@@ -44,13 +45,22 @@ class TrainingStatus(Enum):
     FAILED = 7
     DELETED = 8
 
-UNCOMPLETED_STATES = [TrainingStatus.PENDING,
-                        TrainingStatus.PLACEHOLDER_UNSET,
-                        TrainingStatus.QUEUED,
-                        TrainingStatus.RUNNING,
-                    ]
-COMPLETED_STATES = [TrainingStatus.CANCELED, TrainingStatus.COMPLETED, TrainingStatus.DELETED,
-                    TrainingStatus.FAILED, TrainingStatus.SUSPENDED]
+
+UNCOMPLETED_STATES = [
+    TrainingStatus.PENDING,
+    TrainingStatus.PLACEHOLDER_UNSET,
+    TrainingStatus.QUEUED,
+    TrainingStatus.RUNNING,
+]
+COMPLETED_STATES = [
+    TrainingStatus.CANCELED,
+    TrainingStatus.COMPLETED,
+    TrainingStatus.DELETED,
+    TrainingStatus.FAILED,
+    TrainingStatus.SUSPENDED,
+]
+
+
 class Watcher:
     def __init__(self, config: aconfig.Config):
         """Function to initialize the Watcher."""
@@ -83,6 +93,7 @@ class Watcher:
         self._db_listener_thread = threading.Thread(
             target=self.db_client.start_listener(self.db_update_event_handler)
         )
+        logging.info("Starting DB listener")
         self._db_listener_thread.start()
 
         # Start Full reconcile thread
@@ -108,8 +119,14 @@ class Watcher:
             db_entry = self.db_client.read_record(job_id)
 
         if not db_entry:
-            logging.info("Job exists in kubernetes but not database. Deleting " + job_id)
-            self.delete_job(job_id=job_id, job_name=self.generate_k8s_job_name(job_id), namespace=self.target_namespace)
+            logging.info(
+                "Job exists in kubernetes but not database. Deleting {}".format(job_id)
+            )
+            self.delete_job(
+                job_id=job_id,
+                job_name=self.generate_k8s_job_name(job_id),
+                namespace=self.target_namespace,
+            )
 
         db_state = db_entry.get("status")
         if db_state:
@@ -122,24 +139,33 @@ class Watcher:
 
         if not k8s_entry:
             try:
-                k8s_entry = self.batch_v1_api.read_namespaced_job(namespace=self.target_namespace, name=self.generate_k8s_job_name(job_id))
+                k8s_entry = self.batch_v1_api.read_namespaced_job(
+                    namespace=self.target_namespace,
+                    name=self.generate_k8s_job_name(job_id),
+                )
             except client.exceptions.ApiException as e:
-                logging.info("Job not found in k8s " + job_id)
+                logging.info("Job {} not found in k8s".format(job_id))
                 if db_state in COMPLETED_STATES:
-                    logging.info("Job already completed " + job_id + " = " + db_state.name)
+                    logging.info(
+                        "Job {} already completed = {}".format(job_id, db_state.name)
+                    )
                     if not db_entry.get("deleted"):
                         self.db_client.write_field(job_id, "deleted", "1")
                     return
                 else:
-                    logging.info("Current job state for job " + job_id + ": " + db_state.name)
-                    logging.info("Launching job in Kubernetes " + job_id)
+                    logging.info(
+                        "Current job state for job {}: {}".format(job_id, db_state.name)
+                    )
+                    logging.info("Launching job {} in Kubernetes".format(job_id))
                     env_vars = ""
                     params = db_entry.get("parameters")
                     if params:
                         try:
-                            env_vars=json.loads(params)
+                            env_vars = json.loads(params)
                         except:
-                            logging.error("Could not load env vars for job " + job_id)
+                            logging.error(
+                                "Could not load env vars for job {}".format(job_id)
+                            )
                     self.create_job(
                         job_id=job_id,
                         image=self.tuning_image,
@@ -154,26 +180,25 @@ class Watcher:
         actual_state = self.k8s_job_status_to_enum(k8s_state)
         if db_state != actual_state:
             logging.info(
-                "Actual state "
-                + actual_state.name
-                + " does not match state in database "
-                + db_state.name
-                + " for job "
-                + job_id
+                "Actual state {} does not match state in database {} for job".format(
+                    actual_state.name, db_state.name, job_id
+                )
             )
             # If DB indicates canceled, we need to cancel and delete
             if db_state == TrainingStatus.CANCELED:
                 logging.info("Canceling job " + job_id)
-                self.delete_job(job_id=job_id, job_name=k8s_entry.metadata.name, namespace=self.target_namespace)
+                self.delete_job(
+                    job_id=job_id,
+                    job_name=k8s_entry.metadata.name,
+                    namespace=self.target_namespace,
+                )
                 return
 
             # Otherwise, update DB to reflect actual state in k8s
             self.db_client.write_field(job_id, "status", str(actual_state.name))
-        if (actual_state in COMPLETED_STATES and not db_entry.get("deleted")
-        ):
+        if actual_state in COMPLETED_STATES and not db_entry.get("deleted"):
             logging.info("Job has compelted, deleting from k8s " + job_id)
             self.delete_job(job_id, k8s_entry.metadata.name, self.target_namespace)
-
 
     def monitor_jobs(self, resource_version):
         try:
@@ -184,8 +209,6 @@ class Watcher:
                 timeout_seconds=0,
                 resource_version=resource_version,
             ):
-                #print("Event: %s %s" % (event["type"], event["object"].metadata.name, event["object"].status))
-
                 # Save new resource version to use on next iteration
                 resource_version = event["object"].metadata.resource_version
 
@@ -209,21 +232,18 @@ class Watcher:
 
     def full_reconcile(self):
         logging.info("Beginning full reconcile")
-        job_list = self.batch_v1_api.list_namespaced_job(namespace=self.target_namespace)
+        job_list = self.batch_v1_api.list_namespaced_job(
+            namespace=self.target_namespace
+        )
         resource_version = job_list.metadata.resource_version
         current_jobs = job_list.items
         job_dict = {}
         for job in current_jobs:
             job_dict[job.metadata.labels.get("job_id")] = job
 
-        cursor = '0'
-        #db_entries = {}
+        cursor = "0"
         while cursor != 0:
             cursor, keys = self.db_client.iterate_entries(cursor=cursor)
-            #values = self.db_client.read_many_entries(keys)
-            #values = map(int, values)
-            #db_entries.update(dict(zip(keys, values)))
-            #for job_id, db_record in db_entries.items():
             for job_id in keys:
                 # !!! This fetching from the DB one at a time is wildy inefficient
                 # I was attempting to use mget on Redis but ran into issues
@@ -239,19 +259,24 @@ class Watcher:
             db_entry = self.db_client.read_record(job_id)
             self.reconcile_state(job_id, db_entry, job)
 
+        logging.info("Completed full reconcile")
         return resource_version
-
 
     def delete_job(self, job_id, job_name, namespace):
         try:
             self.batch_v1_api.patch_namespaced_job(
-                name=job_name, namespace=namespace,
-                body={"spec":{"suspend": True}})
+                name=job_name, namespace=namespace, body={"spec": {"suspend": True}}
+            )
             self.batch_v1_api.delete_namespaced_job(name=job_name, namespace=namespace)
             logging.info("Deleted job for id " + job_id)
             self.db_client.write_field(job_id, "deleted", "1")
         except Exception as e:
-            logging.error("Unable to delete job will try again later " + job_id + " Error: " + str(e))
+            logging.error(
+                "Unable to delete job will try again later "
+                + job_id
+                + " Error: "
+                + str(e)
+            )
 
     def k8s_job_status_to_enum(self, k8s_job_status):
         job_status = TrainingStatus.QUEUED
@@ -265,10 +290,9 @@ class Watcher:
         return job_status
 
     def db_update_event_handler(self, msg):
-        print(msg)
-        job_id = msg.get("channel").split(":")[-1]
+        job_id = msg.get("data")
+        logging.info("Recieved DB update for job {}".format(job_id))
         record = self.db_client.read_record(job_id)
-
         self.reconcile_state(job_id, record, None)
 
     def generate_k8s_job_name(self, job_id: str):
@@ -290,21 +314,22 @@ class Watcher:
         # Define mounted volumes
         volumes = []
         volume_mounts = []
-        for volume in self.config.training_volumes:
-            error.type_check("<TCD37116630E>", str, volume_name=volume.name)
-            error.type_check("<TCD24985933E>", str, pvc=volume.pvc_name)
-            error.type_check("<TCD48967099E>", str, mount_path=volume.mount_path)
-            volumes.append(client.V1Volume(
-                            name=volume.name,
-                            persistent_volume_claim=client.V1PersistentVolumeClaimVolumeSource(
-                                claim_name=volume.pvc_name
-                            ))
-            )
-            volume_mounts.append(client.V1VolumeMount(
-                                    name=volume.name,
-                                    mount_path=volume.mount_path
-                                )
-            )
+        if self.config.training_volumes:
+            for volume in self.config.training_volumes:
+                error.type_check("<TCD37116630E>", str, volume_name=volume.name)
+                error.type_check("<TCD24985933E>", str, pvc=volume.pvc_name)
+                error.type_check("<TCD48967099E>", str, mount_path=volume.mount_path)
+                volumes.append(
+                    client.V1Volume(
+                        name=volume.name,
+                        persistent_volume_claim=client.V1PersistentVolumeClaimVolumeSource(
+                            claim_name=volume.pvc_name
+                        ),
+                    )
+                )
+                volume_mounts.append(
+                    client.V1VolumeMount(name=volume.name, mount_path=volume.mount_path)
+                )
 
         # Define the container to run
         env_var_string = self._obj_to_txt(env_vars)
@@ -320,12 +345,15 @@ class Watcher:
             command=["python", "/app/launch_training.py"],
         )
 
-
         # Define the Job template
         template = client.V1PodTemplateSpec(
             metadata=client.V1ObjectMeta(labels={"app": app, "job_id": job_id}),
-            spec=client.V1PodSpec(restart_policy="Never", containers=[container],
-                                  volumes=volumes, image_pull_secrets=[{"name" : image_pull_secrets}]),
+            spec=client.V1PodSpec(
+                restart_policy="Never",
+                containers=[container],
+                volumes=volumes,
+                image_pull_secrets=[{"name": image_pull_secrets}],
+            ),
         )
 
         # Define the Job spec
@@ -347,12 +375,14 @@ class Watcher:
                 body=job_body, namespace=self.target_namespace
             )
         except Exception as e:
-            logging.error("Exception encountered attempting to create job. Will try again later. " + job_id)
+            logging.error(
+                "Exception encountered attempting to create job. Will try again later. "
+                + job_id
+            )
             logging.error(e)
             return
 
-        print("Job created for id " + job_id)
-        logging.info("Created job for id " + job_id)
+        logging.info("Created job for id {}".format(job_id))
         self.db_client.write_field(
             job_id,
             "submission_timestamp",
