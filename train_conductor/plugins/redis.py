@@ -78,8 +78,13 @@ class RedisHelper(DatabaseBase):
     def iterate_entries(self, filter: str = None, cursor=None):
         return self._client.scan(cursor=cursor, match=filter)
 
-    def read_many_entries(self, keys):
-        return self._client.mget(keys)
+    def read_many_entries(self, keys: list[str]):
+            pipe = self._client.pipeline()
+            for key in keys:
+                pipe.hgetall(key)
+            responses = pipe.execute()
+
+            return dict(zip(keys, responses))
 
     def publish_data(self, key):
         self._client.publish("train_conductor", str(key))
