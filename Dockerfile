@@ -1,7 +1,7 @@
 FROM registry.access.redhat.com/ubi9/ubi-minimal
 
 RUN cd ~ && \
-    curl -L -O https://repo.anaconda.com/miniconda/Miniconda3-py311_23.10.0-1-Linux-x86_64.sh && \
+    curl -L -O https://repo.anaconda.com/miniconda/Miniconda3-py311_23.11.0-2-Linux-x86_64.sh && \
     chmod +x Miniconda3-*-Linux-x86_64.sh && \
     bash ./Miniconda3-*-Linux-x86_64.sh -bf -p /opt/miniconda
 
