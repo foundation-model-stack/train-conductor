@@ -51,22 +51,28 @@ message TrainingParameters {
   optional bool use_flash_attn = 21;
   optional string torch_dytpe = 22;
   optional int64 model_max_length = 23;
-  optional string peft_method = 24;
-
-  /* LORA */
-  optional int64 r = 25;
-  optional int64 lora_alpha = 26;
-  repeated string target_modules = 27;
-  optional float bias = 28;
-  optional float lora_dropout = 29;
-
-  /* PT */
-  optional string prompt_tuning_init = 30;
-  optional int64 num_virtual_tokens = 31;
-  optional string prompt_tuning_init_text = 32;
-  optional string tokenizer_name_or_path = 33;
+  oneof peft_method {
+    LORAParameters lora_parameters = 50;
+    PTParameters pt_parameters = 60;
+  }
 }
 
+/* LORA */
+message LORAParameters {
+  optional int64 r = 1;
+  optional int64 lora_alpha = 2;
+  repeated string target_modules = 3;
+  optional float bias = 4;
+  optional float lora_dropout = 5;
+}
+
+/* PT */
+message PTParameters {
+  optional string prompt_tuning_init = 1;
+  optional int64 num_virtual_tokens = 2;
+  optional string prompt_tuning_init_text = 3;
+  optional string tokenizer_name_or_path = 4;
+}
 
 message TrainingInfoRequest {
   string training_id = 1;
