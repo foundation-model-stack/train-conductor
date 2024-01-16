@@ -4,17 +4,21 @@ trainer_config:
   target_namespace: "fmaas-dev"
   save_with_id: true
   output_dir: /data/output
-  tuning_image: sft-trainer
+  base_model_path: /data/
+  tuning_image: us.icr.io/cil15-shared-registry/sft-trainer:011224
   image_pull_secrets: all-icr-io
   # Default resource allocation for a job, if unspecified
   default_resources:
     cpu: 1
-    gpu: 0
+    gpu: 1
   # How often full reconciles should run, in seconds
   reconcile_interval: 30
   # Time limit on job runs, in seconds. If >0, job will be terminated if not completed in time.
   job_time_limit: 28800
 training_volumes:
+  - name: models
+    pvc_name: fmaas-model-pvc
+    mount_path: /data/models
   - name: input-data
     pvc_name: cos-ray-test
     mount_path: /data/input
