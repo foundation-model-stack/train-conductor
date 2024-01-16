@@ -41,7 +41,7 @@ message TrainingParameters {
   optional float weight_decay = 11;
   optional float warmup_ratio = 12;
   optional string lr_scheduler_type = 13;
-  optional string logging_steps = 14;
+  optional float logging_steps = 14;
   optional string fsdp = 15;
   optional string fsdp_config = 16;
   optional bool include_tokens_per_second  = 17;
