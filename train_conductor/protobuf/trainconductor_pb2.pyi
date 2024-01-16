@@ -31,48 +31,68 @@ class TrainingJob(_message.Message):
     def __init__(self, training_id: _Optional[str] = ..., model_name: _Optional[str] = ...) -> None: ...
 
 class TrainingParameters(_message.Message):
-    __slots__ = ["base_model", "bf16", "data_path", "dataset_text_field", "evaluation_strategy", "fsdp", "fsdp_config", "gradient_accumulation_steps", "include_tokens_per_second", "learning_rate", "logging_steps", "lr_scheduler_type", "num_train_epochs", "packing", "per_device_eval_batch_size", "per_device_train_batch_size", "response_template", "save_strategy", "warmup_ratio", "weight_decay"]
-    BASE_MODEL_FIELD_NUMBER: _ClassVar[int]
-    BF16_FIELD_NUMBER: _ClassVar[int]
+    __slots__ = ["bias", "data_path", "dataset_text_field", "fsdp", "fsdp_config", "gradient_accumulation_steps", "include_tokens_per_second", "learning_rate", "logging_steps", "lora_alpha", "lora_dropout", "lr_scheduler_type", "model_max_length", "model_name_or_path", "num_train_epochs", "num_virtual_tokens", "packing", "peft_method", "per_device_eval_batch_size", "per_device_train_batch_size", "prompt_tuning_init", "prompt_tuning_init_text", "r", "response_template", "target_modules", "tokenizer_name_or_path", "torch_dytpe", "use_flash_attn", "warmup_ratio", "weight_decay"]
+    BIAS_FIELD_NUMBER: _ClassVar[int]
     DATASET_TEXT_FIELD_FIELD_NUMBER: _ClassVar[int]
     DATA_PATH_FIELD_NUMBER: _ClassVar[int]
-    EVALUATION_STRATEGY_FIELD_NUMBER: _ClassVar[int]
     FSDP_CONFIG_FIELD_NUMBER: _ClassVar[int]
     FSDP_FIELD_NUMBER: _ClassVar[int]
     GRADIENT_ACCUMULATION_STEPS_FIELD_NUMBER: _ClassVar[int]
     INCLUDE_TOKENS_PER_SECOND_FIELD_NUMBER: _ClassVar[int]
     LEARNING_RATE_FIELD_NUMBER: _ClassVar[int]
     LOGGING_STEPS_FIELD_NUMBER: _ClassVar[int]
+    LORA_ALPHA_FIELD_NUMBER: _ClassVar[int]
+    LORA_DROPOUT_FIELD_NUMBER: _ClassVar[int]
     LR_SCHEDULER_TYPE_FIELD_NUMBER: _ClassVar[int]
+    MODEL_MAX_LENGTH_FIELD_NUMBER: _ClassVar[int]
+    MODEL_NAME_OR_PATH_FIELD_NUMBER: _ClassVar[int]
     NUM_TRAIN_EPOCHS_FIELD_NUMBER: _ClassVar[int]
+    NUM_VIRTUAL_TOKENS_FIELD_NUMBER: _ClassVar[int]
     PACKING_FIELD_NUMBER: _ClassVar[int]
+    PEFT_METHOD_FIELD_NUMBER: _ClassVar[int]
     PER_DEVICE_EVAL_BATCH_SIZE_FIELD_NUMBER: _ClassVar[int]
     PER_DEVICE_TRAIN_BATCH_SIZE_FIELD_NUMBER: _ClassVar[int]
+    PROMPT_TUNING_INIT_FIELD_NUMBER: _ClassVar[int]
+    PROMPT_TUNING_INIT_TEXT_FIELD_NUMBER: _ClassVar[int]
     RESPONSE_TEMPLATE_FIELD_NUMBER: _ClassVar[int]
-    SAVE_STRATEGY_FIELD_NUMBER: _ClassVar[int]
+    R_FIELD_NUMBER: _ClassVar[int]
+    TARGET_MODULES_FIELD_NUMBER: _ClassVar[int]
+    TOKENIZER_NAME_OR_PATH_FIELD_NUMBER: _ClassVar[int]
+    TORCH_DYTPE_FIELD_NUMBER: _ClassVar[int]
+    USE_FLASH_ATTN_FIELD_NUMBER: _ClassVar[int]
     WARMUP_RATIO_FIELD_NUMBER: _ClassVar[int]
     WEIGHT_DECAY_FIELD_NUMBER: _ClassVar[int]
-    base_model: str
-    bf16: bool
+    bias: float
     data_path: str
     dataset_text_field: str
-    evaluation_strategy: str
     fsdp: str
     fsdp_config: str
     gradient_accumulation_steps: int
     include_tokens_per_second: bool
     learning_rate: float
-    logging_steps: int
+    logging_steps: str
+    lora_alpha: int
+    lora_dropout: float
     lr_scheduler_type: str
-    num_train_epochs: int
+    model_max_length: int
+    model_name_or_path: str
+    num_train_epochs: float
+    num_virtual_tokens: int
     packing: bool
+    peft_method: str
     per_device_eval_batch_size: int
     per_device_train_batch_size: int
+    prompt_tuning_init: str
+    prompt_tuning_init_text: str
+    r: int
     response_template: str
-    save_strategy: str
+    target_modules: _containers.RepeatedScalarFieldContainer[str]
+    tokenizer_name_or_path: str
+    torch_dytpe: str
+    use_flash_attn: bool
     warmup_ratio: float
     weight_decay: float
-    def __init__(self, base_model: _Optional[str] = ..., data_path: _Optional[str] = ..., bf16: bool = ..., num_train_epochs: _Optional[int] = ..., per_device_train_batch_size: _Optional[int] = ..., per_device_eval_batch_size: _Optional[int] = ..., gradient_accumulation_steps: _Optional[int] = ..., evaluation_strategy: _Optional[str] = ..., save_strategy: _Optional[str] = ..., learning_rate: _Optional[float] = ..., weight_decay: _Optional[float] = ..., warmup_ratio: _Optional[float] = ..., lr_scheduler_type: _Optional[str] = ..., logging_steps: _Optional[int] = ..., fsdp: _Optional[str] = ..., fsdp_config: _Optional[str] = ..., include_tokens_per_second: bool = ..., packing: bool = ..., response_template: _Optional[str] = ..., dataset_text_field: _Optional[str] = ...) -> None: ...
+    def __init__(self, model_name_or_path: _Optional[str] = ..., data_path: _Optional[str] = ..., num_train_epochs: _Optional[float] = ..., per_device_train_batch_size: _Optional[int] = ..., per_device_eval_batch_size: _Optional[int] = ..., gradient_accumulation_steps: _Optional[int] = ..., learning_rate: _Optional[float] = ..., weight_decay: _Optional[float] = ..., warmup_ratio: _Optional[float] = ..., lr_scheduler_type: _Optional[str] = ..., logging_steps: _Optional[str] = ..., fsdp: _Optional[str] = ..., fsdp_config: _Optional[str] = ..., include_tokens_per_second: bool = ..., packing: bool = ..., response_template: _Optional[str] = ..., dataset_text_field: _Optional[str] = ..., use_flash_attn: bool = ..., torch_dytpe: _Optional[str] = ..., model_max_length: _Optional[int] = ..., peft_method: _Optional[str] = ..., r: _Optional[int] = ..., lora_alpha: _Optional[int] = ..., target_modules: _Optional[_Iterable[str]] = ..., bias: _Optional[float] = ..., lora_dropout: _Optional[float] = ..., prompt_tuning_init: _Optional[str] = ..., num_virtual_tokens: _Optional[int] = ..., prompt_tuning_init_text: _Optional[str] = ..., tokenizer_name_or_path: _Optional[str] = ...) -> None: ...
 
 class TrainingRequest(_message.Message):
     __slots__ = ["model_name", "output_path", "parameters"]
