@@ -70,16 +70,6 @@ message TrainingParameters {
   optional bool overwrite_output_dir = 34;
 }
 
-
-message LORAParameters {
-
-}
-
-/* PT */
-message PTParameters {
-
-}
-
 message TrainingInfoRequest {
   string training_id = 1;
 }
