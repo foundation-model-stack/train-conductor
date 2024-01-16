@@ -87,6 +87,7 @@ class Watcher:
         #
 
         self.batch_v1_api = client.BatchV1Api()
+        self.core_v1_api = client.CoreV1Api()
         resource_version = self.full_reconcile()
 
         # Start DB listener thread
@@ -199,7 +200,23 @@ class Watcher:
             self.db_client.write_field(job_id, "status", str(actual_state.name))
         if actual_state in COMPLETED_STATES and not db_entry.get("deleted"):
             logging.info("Job has compelted, deleting from k8s " + job_id)
+            self.capture_failed_state(job_id=job_id, job=k8s_entry)
             self.delete_job(job_id, k8s_entry.metadata.name, self.target_namespace)
+
+    def capture_failed_state(self, job_id: str, job: V1Job):
+        logs = self.get_job_logs(job)
+        self.db_client.write_field(job_id, "errors", logs)
+
+    def get_job_logs(self, job: V1Job):
+        logs = ""
+        selector = "job-name=" + job.metadata.name
+        pods = self.core_v1_api.list_namespaced_pod(namespace=self.target_namespace, label_selector=selector)
+        for pod in pods.items:
+            pod_name = pod.metadata.name
+            pod_log = self.core_v1_api.read_namespaced_pod_log(pod_name, self.target_namespace)
+            logs += pod_log
+        print(logs)
+        return logs
 
     def monitor_jobs(self, resource_version):
         """
