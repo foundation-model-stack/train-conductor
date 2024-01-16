@@ -34,9 +34,9 @@ message TrainingParameters {
   string model_name_or_path = 1;
   string data_path = 2;
   optional float num_train_epochs = 4;
-  optional int64 per_device_train_batch_size = 5;
-  optional int64 per_device_eval_batch_size = 6;
-  optional int64 gradient_accumulation_steps = 7;
+  optional int32 per_device_train_batch_size = 5;
+  optional int32 per_device_eval_batch_size = 6;
+  optional int32 gradient_accumulation_steps = 7;
   optional float learning_rate = 10;
   optional float weight_decay = 11;
   optional float warmup_ratio = 12;
@@ -50,7 +50,7 @@ message TrainingParameters {
   optional string dataset_text_field = 20;
   optional bool use_flash_attn = 21;
   optional string torch_dytpe = 22;
-  optional int64 model_max_length = 23;
+  optional int32 model_max_length = 23;
   oneof peft_method {
     LORAParameters lora_parameters = 50;
     PTParameters pt_parameters = 60;
@@ -59,8 +59,8 @@ message TrainingParameters {
 
 /* LORA */
 message LORAParameters {
-  optional int64 r = 1;
-  optional int64 lora_alpha = 2;
+  optional int32 r = 1;
+  optional int32 lora_alpha = 2;
   repeated string target_modules = 3;
   optional float bias = 4;
   optional float lora_dropout = 5;
@@ -69,7 +69,7 @@ message LORAParameters {
 /* PT */
 message PTParameters {
   optional string prompt_tuning_init = 1;
-  optional int64 num_virtual_tokens = 2;
+  optional int32 num_virtual_tokens = 2;
   optional string prompt_tuning_init_text = 3;
   optional string tokenizer_name_or_path = 4;
 }
