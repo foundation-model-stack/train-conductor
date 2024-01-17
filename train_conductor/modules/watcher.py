@@ -32,33 +32,7 @@ import aconfig
 # Local
 from train_conductor.utils import error_check as error
 from train_conductor.datastore.redis import RedisHelper
-
-
-class TrainingStatus(Enum):
-    PLACEHOLDER_UNSET = 0
-    PENDING = 1
-    QUEUED = 2
-    RUNNING = 3
-    SUSPENDED = 4
-    COMPLETED = 5
-    CANCELED = 6
-    FAILED = 7
-    DELETED = 8
-
-
-UNCOMPLETED_STATES = [
-    TrainingStatus.PENDING,
-    TrainingStatus.PLACEHOLDER_UNSET,
-    TrainingStatus.QUEUED,
-    TrainingStatus.RUNNING,
-]
-COMPLETED_STATES = [
-    TrainingStatus.CANCELED,
-    TrainingStatus.COMPLETED,
-    TrainingStatus.DELETED,
-    TrainingStatus.FAILED,
-    TrainingStatus.SUSPENDED,
-]
+from train_conductor.types import TrainingStatus, COMPLETED_STATES
 
 
 class Watcher:
@@ -210,10 +184,14 @@ class Watcher:
     def get_job_logs(self, job: V1Job):
         logs = ""
         selector = "job-name=" + job.metadata.name
-        pods = self.core_v1_api.list_namespaced_pod(namespace=self.target_namespace, label_selector=selector)
+        pods = self.core_v1_api.list_namespaced_pod(
+            namespace=self.target_namespace, label_selector=selector
+        )
         for pod in pods.items:
             pod_name = pod.metadata.name
-            pod_log = self.core_v1_api.read_namespaced_pod_log(pod_name, self.target_namespace)
+            pod_log = self.core_v1_api.read_namespaced_pod_log(
+                pod_name, self.target_namespace
+            )
             logs += pod_log
         print(logs)
         return logs
@@ -273,7 +251,9 @@ class Watcher:
             job_dict[job.metadata.labels.get("job_id")] = job
 
         for job_id, db_entry in self.scan_db_entries():
-            logging.info("Evaluating job " + job_id + " with status " + db_entry.get("status"))
+            logging.info(
+                "Evaluating job " + job_id + " with status " + db_entry.get("status")
+            )
             self.reconcile_state(job_id, db_entry, job_dict.pop(job_id, None))
 
         # Jobs in K8s that are not not in DB
@@ -288,7 +268,9 @@ class Watcher:
     def delete_job(self, job_id, job_name, namespace):
         try:
             # Propogation policy makes sure that pods belonging to the job get deleted as well, asynchronously
-            self.batch_v1_api.delete_namespaced_job(name=job_name, namespace=namespace, propagation_policy="Background")
+            self.batch_v1_api.delete_namespaced_job(
+                name=job_name, namespace=namespace, propagation_policy="Background"
+            )
             logging.info("Deleted job for id " + job_id)
             self.db_client.write_field(job_id, "deleted", "1")
         except Exception as e:
