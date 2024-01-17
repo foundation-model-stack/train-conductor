@@ -15,6 +15,7 @@
 # Standard
 from enum import Enum
 
+
 class TrainingStatus(Enum):
     PLACEHOLDER_UNSET = 0
     PENDING = 1
@@ -25,3 +26,19 @@ class TrainingStatus(Enum):
     CANCELED = 6
     FAILED = 7
     DELETED = 8
+
+
+UNCOMPLETED_STATES = [
+    TrainingStatus.PENDING,
+    TrainingStatus.PLACEHOLDER_UNSET,
+    TrainingStatus.QUEUED,
+    TrainingStatus.RUNNING,
+]
+
+COMPLETED_STATES = [
+    TrainingStatus.CANCELED,
+    TrainingStatus.COMPLETED,
+    TrainingStatus.DELETED,
+    TrainingStatus.FAILED,
+    TrainingStatus.SUSPENDED,
+]
