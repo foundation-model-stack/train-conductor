@@ -51,7 +51,8 @@ message TrainingParameters {
   optional bool use_flash_attn = 21;
   optional string torch_dytpe = 22;
   optional int32 model_max_length = 23;
-  oneof peft_method {
+  optional string peft_method = 24;
+  oneof peft_method_parameters {
     LORAParameters lora_parameters = 50;
     PTParameters pt_parameters = 60;
   }
