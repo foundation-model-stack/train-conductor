@@ -13,10 +13,10 @@
 # limitations under the License.
 
 # Standard
+import datetime
 import importlib
 from uuid import uuid4
 import json
-from datetime import datetime
 
 # First Party
 from aconfig import Config
@@ -28,11 +28,11 @@ from grpc import ServicerContext
 from google.protobuf.json_format import MessageToDict
 
 # Local
-from .protobuf import trainconductor_pb2_grpc
-from .protobuf.trainconductor_pb2 import TrainingStatusResponse, TrainingJob
-from train_conductor.interfaces import TrainingStatus
+from train_conductor.protobuf import trainconductor_pb2_grpc
+from train_conductor.protobuf.trainconductor_pb2 import TrainingStatusResponse, TrainingJob
+from train_conductor.types import TrainingStatus
+from train_conductor.utils.helpers import convert_timestamp
 from train_conductor.utils import error_check as error
-
 
 class TrainingServicer(trainconductor_pb2_grpc.TrainConductorServicer):
     """Provides methods that implement functionality of training servicer"""
@@ -81,10 +81,10 @@ class TrainingServicer(trainconductor_pb2_grpc.TrainConductorServicer):
                 reasons=[training_info.get("errors")]
                 if training_info.get("errors")
                 else [],
-                submission_timestamp=self._convert_timestamp(submission_timestamp)
+                submission_timestamp=convert_timestamp(submission_timestamp)
                 if submission_timestamp
                 else None,
-                completion_timestamp=self._convert_timestamp(completion_timestamp)
+                completion_timestamp=convert_timestamp(completion_timestamp)
                 if completion_timestamp
                 else None,
             )
