@@ -49,7 +49,7 @@ message TrainingParameters {
   optional string response_template = 19;
   optional string dataset_text_field = 20;
   optional bool use_flash_attn = 21;
-  optional string torch_dytpe = 22;
+  optional string torch_dtype = 22;
   optional int32 model_max_length = 23;
   optional string peft_method = 24;
 
@@ -69,12 +69,12 @@ message TrainingParameters {
 
 
 message LORAParameters {
-  
+
 }
 
 /* PT */
 message PTParameters {
-  
+
 }
 
 message TrainingInfoRequest {
