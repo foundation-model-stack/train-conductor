@@ -13,8 +13,8 @@
 # limitations under the License.
 import abc
 
-class DatabaseBase(abc.ABC):
 
+class DatabaseBase(abc.ABC):
     @abc.abstractclassmethod
     def __init__(self, config: dict) -> None:
         super().__init__()

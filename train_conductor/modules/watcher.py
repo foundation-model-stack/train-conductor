@@ -31,7 +31,7 @@ import aconfig
 
 # Local
 from train_conductor.utils import error_check as error
-from train_conductor.plugins.redis import RedisHelper
+from train_conductor.datastore.redis import RedisHelper
 
 
 class TrainingStatus(Enum):

@@ -21,7 +21,7 @@ import redis
 import aconfig
 
 # Local
-from train_conductor.interfaces.database import DatabaseBase
+from train_conductor.datastore.database_base import DatabaseBase
 from train_conductor.utils.error_check import type_check, file_check
 
 
@@ -79,12 +79,12 @@ class RedisHelper(DatabaseBase):
         return self._client.scan(cursor=cursor, match=filter)
 
     def read_many_entries(self, keys: list[str]):
-            pipe = self._client.pipeline()
-            for key in keys:
-                pipe.hgetall(key)
-            responses = pipe.execute()
+        pipe = self._client.pipeline()
+        for key in keys:
+            pipe.hgetall(key)
+        responses = pipe.execute()
 
-            return dict(zip(keys, responses))
+        return dict(zip(keys, responses))
 
     def publish_data(self, key):
         self._client.publish("train_conductor", str(key))
