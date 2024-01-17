@@ -344,7 +344,7 @@ class Watcher:
             volume_mounts=volume_mounts,
             image=image,
             env=[
-                client.V1EnvVar(name="JOB_CONFIG_JSON_ENV_VAR", value=env_var_string),
+                client.V1EnvVar(name="SFT_TRAINER_CONFIG_JSON_ENV_VAR", value=env_var_string),
                 client.V1EnvVar(name="ALLOW_DOWNLOADS", value="true"),
             ],
             resources=client.V1ResourceRequirements(limits={"nvidia.com/gpu": gpus}),
