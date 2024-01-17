@@ -9,6 +9,9 @@ Train Conductor is a lightweight Python-based tool for the deployment and manage
 
 * Database - Currently implemented in Redis. Train Conductor assumes the existence of the database, the user will provide the connection information as part of configuration.
 
+## Architecture Diagram
+![Architecture Diagram](docs/images/TrainConductorArchitecture.png)
+
 Below is an example flow of how a new training request is managed.
 
 ![Training Sequence Diagram](docs/images/TrainConductorSequences.png)
