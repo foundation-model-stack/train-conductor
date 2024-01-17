@@ -52,27 +52,29 @@ message TrainingParameters {
   optional string torch_dytpe = 22;
   optional int32 model_max_length = 23;
   optional string peft_method = 24;
-  oneof peft_method_parameters {
-    LORAParameters lora_parameters = 50;
-    PTParameters pt_parameters = 60;
-  }
+
+  /* LORA */
+  optional int32 r = 25;
+  optional int32 lora_alpha = 26;
+  repeated string target_modules = 27;
+  optional float bias = 28;
+  optional float lora_dropout = 29;
+
+  /* PT */
+  optional string prompt_tuning_init = 30;
+  optional int32 num_virtual_tokens = 31;
+  optional string prompt_tuning_init_text = 32;
+  optional string tokenizer_name_or_path = 33;
 }
 
-/* LORA */
+
 message LORAParameters {
-  optional int32 r = 1;
-  optional int32 lora_alpha = 2;
-  repeated string target_modules = 3;
-  optional float bias = 4;
-  optional float lora_dropout = 5;
+  
 }
 
 /* PT */
 message PTParameters {
-  optional string prompt_tuning_init = 1;
-  optional int32 num_virtual_tokens = 2;
-  optional string prompt_tuning_init_text = 3;
-  optional string tokenizer_name_or_path = 4;
+  
 }
 
 message TrainingInfoRequest {
