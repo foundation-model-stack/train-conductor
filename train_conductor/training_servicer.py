@@ -31,6 +31,7 @@ from google.protobuf.json_format import MessageToDict
 from .protobuf import trainconductor_pb2_grpc
 from .protobuf.trainconductor_pb2 import TrainingStatusResponse, TrainingJob
 from train_conductor.interfaces import TrainingStatus
+from train_conductor.utils import error_check as error
 
 
 class TrainingServicer(trainconductor_pb2_grpc.TrainConductorServicer):
@@ -50,6 +51,9 @@ class TrainingServicer(trainconductor_pb2_grpc.TrainConductorServicer):
             job_id = str(uuid4())
             request_dict = MessageToDict(request, preserving_proto_field_name=True)
             param_dict = request_dict.get("parameters")
+
+            self._validate_train_params(param_dict)
+
             param_dict["output_dir"] = (
                 request_dict.get("output_path") or self.config.trainer_config.output_dir
             )
@@ -116,4 +120,51 @@ class TrainingServicer(trainconductor_pb2_grpc.TrainConductorServicer):
         ts_dt = datetime.strptime(ts_str, "%m/%d/%Y %H:%M:%S")
         return timestamp_pb2.Timestamp(
             seconds=int(ts_dt.timestamp()), nanos=int(ts_dt.microsecond * 1e3)
+        )
+
+    def _validate_train_params(self, request_parameters):
+        num_train_epochs = request_parameters.get("num_train_epochs")
+        per_device_train_batch_size = request_parameters.get(
+            "per_device_train_batch_size"
+        )
+        gradient_accumulation_steps = request_parameters.get(
+            "gradient_accumulation_steps"
+        )
+        model_max_length = request_parameters.get("model_max_length")
+        error.type_check(
+            "<TCD37116520E>",
+            int,
+            allow_none=True,
+            num_train_epochs=num_train_epochs,
+            per_device_train_batch_size=per_device_train_batch_size,
+            gradient_accumulation_steps=gradient_accumulation_steps,
+            model_max_length=model_max_length,
+        )
+
+        error.value_check(
+            "<TCD37116521E>",
+            num_train_epochs >= 1,
+            "num_train_epochs has to be greater or equal to 1",
+        )
+        error.value_check(
+            "<TCD37116522E>",
+            per_device_train_batch_size >= 1,
+            "per_device_train_batch_size has to be greater or equal to 1",
+        )
+        error.value_check(
+            "<TCD37116523E>",
+            gradient_accumulation_steps >= 1,
+            "gradient_accumulation_steps has to be greater or equal to 1",
+        )
+        error.value_check(
+            "<TCD37116524E>",
+            model_max_length >= 1,
+            "model_max_length has to be greater or equal to 1",
+        )
+
+        peft_method = request_parameters.get("peft_method")
+        error.value_check(
+            "<TCD37116525E>",
+            peft_method in [None, "lora", "pt"],
+            "peft_method has to be either unspecified, 'lora' or 'pt'",
         )
