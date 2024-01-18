@@ -78,7 +78,7 @@ class TrainingServicer(trainconductor_pb2_grpc.TrainConductorServicer):
             return TrainingStatusResponse(
                 training_id=request.training_id,
                 state=training_info.get("status"),
-                reasons=[str(error) for error in training_info.get("errors")]
+                reasons=[training_info.get("errors")]
                 if training_info.get("errors")
                 else [],
                 submission_timestamp=self._convert_timestamp(submission_timestamp)
