@@ -27,7 +27,7 @@ data:
     datastore:
       type: redis
       helper_class: RedisHelper
-      helper_module_path: train_conductor.plugins.redis
+      helper_module_path: train_conductor.datastore.redis
       connection:
         host: redis-service
         port: 6379

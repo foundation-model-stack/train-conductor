@@ -13,15 +13,14 @@
 # limitations under the License.
 
 # Standard
-from enum import Enum
+from datetime import datetime
 
-class TrainingStatus(Enum):
-    PLACEHOLDER_UNSET = 0
-    PENDING = 1
-    QUEUED = 2
-    RUNNING = 3
-    SUSPENDED = 4
-    COMPLETED = 5
-    CANCELED = 6
-    FAILED = 7
-    DELETED = 8
+# Third Party
+from google.protobuf import timestamp_pb2
+
+
+def convert_timestamp(ts_str):
+    ts_dt = datetime.strptime(ts_str, "%m/%d/%Y %H:%M:%S")
+    return timestamp_pb2.Timestamp(
+        seconds=int(ts_dt.timestamp()), nanos=int(ts_dt.microsecond * 1e3)
+    )

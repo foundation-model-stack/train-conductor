@@ -16,21 +16,20 @@
 import importlib
 from uuid import uuid4
 import json
-from datetime import datetime
 
 # First Party
 from aconfig import Config
 
 # Third Party
-from google.protobuf import timestamp_pb2
 from google.protobuf.message import Message as ProtoMessageType
 from grpc import ServicerContext
 from google.protobuf.json_format import MessageToDict
 
 # Local
-from .protobuf import trainconductor_pb2_grpc
-from .protobuf.trainconductor_pb2 import TrainingStatusResponse, TrainingJob
-from train_conductor.interfaces import TrainingStatus
+from train_conductor.protobuf import trainconductor_pb2_grpc
+from train_conductor.protobuf.trainconductor_pb2 import TrainingStatusResponse, TrainingJob
+from train_conductor.types import TrainingStatus
+from train_conductor.utils.helpers import convert_timestamp
 
 
 class TrainingServicer(trainconductor_pb2_grpc.TrainConductorServicer):
@@ -77,10 +76,10 @@ class TrainingServicer(trainconductor_pb2_grpc.TrainConductorServicer):
                 reasons=[training_info.get("errors")]
                 if training_info.get("errors")
                 else [],
-                submission_timestamp=self._convert_timestamp(submission_timestamp)
+                submission_timestamp=convert_timestamp(submission_timestamp)
                 if submission_timestamp
                 else None,
-                completion_timestamp=self._convert_timestamp(completion_timestamp)
+                completion_timestamp=convert_timestamp(completion_timestamp)
                 if completion_timestamp
                 else None,
             )
@@ -112,8 +111,4 @@ class TrainingServicer(trainconductor_pb2_grpc.TrainConductorServicer):
                 )
             ) from err
 
-    def _convert_timestamp(self, ts_str):
-        ts_dt = datetime.strptime(ts_str, "%m/%d/%Y %H:%M:%S")
-        return timestamp_pb2.Timestamp(
-            seconds=int(ts_dt.timestamp()), nanos=int(ts_dt.microsecond * 1e3)
-        )
+

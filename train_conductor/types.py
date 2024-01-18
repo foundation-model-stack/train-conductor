@@ -12,5 +12,33 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .database import DatabaseBase
-from .training_info import TrainingStatus
+# Standard
+from enum import Enum
+
+
+class TrainingStatus(Enum):
+    PLACEHOLDER_UNSET = 0
+    PENDING = 1
+    QUEUED = 2
+    RUNNING = 3
+    SUSPENDED = 4
+    COMPLETED = 5
+    CANCELED = 6
+    FAILED = 7
+    DELETED = 8
+
+
+UNCOMPLETED_STATES = [
+    TrainingStatus.PENDING,
+    TrainingStatus.PLACEHOLDER_UNSET,
+    TrainingStatus.QUEUED,
+    TrainingStatus.RUNNING,
+]
+
+COMPLETED_STATES = [
+    TrainingStatus.CANCELED,
+    TrainingStatus.COMPLETED,
+    TrainingStatus.DELETED,
+    TrainingStatus.FAILED,
+    TrainingStatus.SUSPENDED,
+]
