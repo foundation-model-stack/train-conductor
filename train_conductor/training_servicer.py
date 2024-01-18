@@ -56,7 +56,7 @@ class TrainingServicer(trainconductor_pb2_grpc.TrainConductorServicer):
 
             param_dict["output_dir"] = (
                 request_dict.get("output_path") or self.config.trainer_config.output_dir
-            )
+            ) + "/" + job_id
             params = json.dumps(param_dict, indent=4)
             request_dict.pop("parameters")
             request_dict.update(
@@ -135,32 +135,45 @@ class TrainingServicer(trainconductor_pb2_grpc.TrainConductorServicer):
             "<TCD37116520E>",
             int,
             allow_none=True,
-            num_train_epochs=num_train_epochs,
             per_device_train_batch_size=per_device_train_batch_size,
             gradient_accumulation_steps=gradient_accumulation_steps,
             model_max_length=model_max_length,
         )
 
-        error.value_check(
-            "<TCD37116521E>",
-            num_train_epochs >= 1,
-            "num_train_epochs has to be greater or equal to 1",
+        error.type_check(
+            "<TCD37116520E>",
+            float,
+            allow_none=True,
+            num_train_epochs=num_train_epochs,
         )
-        error.value_check(
-            "<TCD37116522E>",
-            per_device_train_batch_size >= 1,
-            "per_device_train_batch_size has to be greater or equal to 1",
-        )
-        error.value_check(
-            "<TCD37116523E>",
-            gradient_accumulation_steps >= 1,
-            "gradient_accumulation_steps has to be greater or equal to 1",
-        )
-        error.value_check(
-            "<TCD37116524E>",
-            model_max_length >= 1,
-            "model_max_length has to be greater or equal to 1",
-        )
+
+        if num_train_epochs:
+            error.value_check(
+                "<TCD37116521E>",
+                num_train_epochs >= 1,
+                "num_train_epochs has to be greater or equal to 1",
+            )
+
+        if per_device_train_batch_size:
+            error.value_check(
+                "<TCD37116522E>",
+                per_device_train_batch_size >= 1,
+                "per_device_train_batch_size has to be greater or equal to 1",
+            )
+
+        if gradient_accumulation_steps:
+            error.value_check(
+                "<TCD37116523E>",
+                gradient_accumulation_steps >= 1,
+                "gradient_accumulation_steps has to be greater or equal to 1",
+            )
+
+        if model_max_length:
+            error.value_check(
+                "<TCD37116524E>",
+                model_max_length >= 1,
+                "model_max_length has to be greater or equal to 1",
+            )
 
         peft_method = request_parameters.get("peft_method")
         error.value_check(
