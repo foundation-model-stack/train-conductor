@@ -10,6 +10,7 @@ data:
       target_namespace: "default"
       save_with_id: true
       output_dir: /data/output
+      base_model_path: /data/models
       tuning_image: sft-trainer
       image_pull_secrets: all-icr-io
       default_resources:
@@ -18,6 +19,9 @@ data:
       reconcile_interval: 30
       job_time_limit: 28800
     training_volumes:
+      - name: models
+        pvc_name: fmaas-model-pvc
+        mount_path: /data/models
       - name: input-data
         pvc_name: cos-ray-output
         mount_path: /data/input

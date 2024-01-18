@@ -31,28 +31,44 @@ message TrainingRequest {
 message TrainingParameters {
 
   /*-- fields --*/
-  string base_model = 1;
+  string model_name_or_path = 1;
   string data_path = 2;
-  optional bool bf16 = 3;
-  optional int64 num_train_epochs = 4;
-  optional int64 per_device_train_batch_size = 5;
-  optional int64 per_device_eval_batch_size = 6;
-  optional int64 gradient_accumulation_steps = 7;
-  optional string evaluation_strategy = 8;
-  optional string save_strategy = 9;
-  optional double learning_rate = 10;
-  optional double weight_decay = 11;
-  optional double warmup_ratio = 12;
+  optional string save_strategy = 3;
+  optional float num_train_epochs = 4;
+  optional int32 per_device_train_batch_size = 5;
+  optional int32 per_device_eval_batch_size = 6;
+  optional int32 gradient_accumulation_steps = 7;
+  optional float learning_rate = 10;
+  optional float weight_decay = 11;
+  optional float warmup_ratio = 12;
   optional string lr_scheduler_type = 13;
-  optional int64 logging_steps = 14;
+  optional float logging_steps = 14;
   optional string fsdp = 15;
   optional string fsdp_config = 16;
   optional bool include_tokens_per_second  = 17;
-  optional bool packing = 18; 
+  optional bool packing = 18;
   optional string response_template = 19;
   optional string dataset_text_field = 20;
-}
+  optional bool use_flash_attn = 21;
+  optional string torch_dtype = 22;
+  optional int32 model_max_length = 23;
+  optional string peft_method = 24;
 
+  /* LORA */
+  optional int32 r = 25;
+  optional int32 lora_alpha = 26;
+  repeated string target_modules = 27;
+  optional float bias = 28;
+  optional float lora_dropout = 29;
+
+  /* PT */
+  optional string prompt_tuning_init = 30;
+  optional int32 num_virtual_tokens = 31;
+  optional string prompt_tuning_init_text = 32;
+  optional string tokenizer_name_or_path = 33;
+
+  optional bool overwrite_output_dir = 34;
+}
 
 message TrainingInfoRequest {
   string training_id = 1;
