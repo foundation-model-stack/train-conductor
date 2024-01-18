@@ -17,13 +17,11 @@ import datetime
 import importlib
 from uuid import uuid4
 import json
-from datetime import datetime
 
 # First Party
 from aconfig import Config
 
 # Third Party
-from google.protobuf import timestamp_pb2
 from google.protobuf.message import Message as ProtoMessageType
 from grpc import ServicerContext
 from google.protobuf.json_format import MessageToDict
@@ -34,6 +32,7 @@ from train_conductor.protobuf.trainconductor_pb2 import TrainingStatusResponse, 
 from train_conductor.types import TrainingStatus
 from train_conductor.utils.helpers import convert_timestamp
 from train_conductor.utils import error_check as error
+
 
 class TrainingServicer(trainconductor_pb2_grpc.TrainConductorServicer):
     """Provides methods that implement functionality of training servicer"""
