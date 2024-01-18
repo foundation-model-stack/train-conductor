@@ -3,7 +3,7 @@ trainer_config:
   save_with_id: true
   output_dir: /data/output
   base_model_path: /data/
-  tuning_image: us.icr.io/cil15-shared-registry/sft-trainer:011224
+  tuning_image: sft-trainer
   image_pull_secrets: all-icr-io
   # Default resource allocation for a job, if unspecified
   default_resources:
