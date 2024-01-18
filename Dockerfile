@@ -17,7 +17,7 @@ RUN python -m pip install /tmp/train-conductor
 COPY runtime_config.yml /app
 
 RUN true \
-    && microdnf update \
+    && microdnf update -y \
     && microdnf clean all \
     && true
 
