@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi9/ubi-minimal
+FROM registry.access.redhat.com/ubi9/ubi-minimal:latest
 
 RUN cd ~ && \
     curl -L -O https://repo.anaconda.com/miniconda/Miniconda3-py311_23.10.0-1-Linux-x86_64.sh && \
@@ -15,5 +15,15 @@ COPY train_conductor /tmp/train-conductor/train_conductor
 
 RUN python -m pip install /tmp/train-conductor
 COPY runtime_config.yml /app
+
+RUN true \
+    && microdnf update \
+    && microdnf clean all \
+    && true
+
+RUN chown -R 1000:1000 /app
+RUN chown -R 1000:1000 /tmp/train-conductor
+
+USER 1000
 
 CMD [ "python", "-m", "train_conductor.grpc_server"]
