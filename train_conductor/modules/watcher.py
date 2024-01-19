@@ -146,7 +146,8 @@ class Watcher:
                         job_id=job_id,
                         image=self.tuning_image,
                         image_pull_secrets=self.config.trainer_config.image_pull_secrets,
-                        gpus=self.config.trainer_config.default_resources.gpu,
+                        gpus=env_vars.get("num_gpus")
+                        or self.config.trainer_config.default_resources.gpu,
                         env_vars=env_vars,
                     )
                     return
@@ -343,7 +344,9 @@ class Watcher:
             volume_mounts=volume_mounts,
             image=image,
             env=[
-                client.V1EnvVar(name="SFT_TRAINER_CONFIG_JSON_ENV_VAR", value=env_var_string),
+                client.V1EnvVar(
+                    name="SFT_TRAINER_CONFIG_JSON_ENV_VAR", value=env_var_string
+                ),
                 client.V1EnvVar(name="ALLOW_DOWNLOADS", value="true"),
             ],
             resources=client.V1ResourceRequirements(limits={"nvidia.com/gpu": gpus}),
