@@ -68,6 +68,7 @@ message TrainingParameters {
   optional string tokenizer_name_or_path = 33;
 
   optional bool overwrite_output_dir = 34;
+  optional int32 num_gpus = 35;
 }
 
 message TrainingInfoRequest {
