@@ -1,0 +1,12 @@
+trainer_config:
+  target_namespace: "default"
+  tuning_image: some-image
+datastore:
+  type: redis
+  helper_class: MockRedis
+  helper_module_path: tests.fixtures.database
+  connection:
+      host: ""
+      port: 0
+      db_num: 0
+      user: ""
