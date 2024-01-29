@@ -1,19 +1,13 @@
 FROM registry.access.redhat.com/ubi9/ubi-minimal:latest
 
-RUN cd ~ && \
-    curl -L -O https://repo.anaconda.com/miniconda/Miniconda3-py311_23.11.0-2-Linux-x86_64.sh && \
-    chmod +x Miniconda3-*-Linux-x86_64.sh && \
-    bash ./Miniconda3-*-Linux-x86_64.sh -bf -p /opt/miniconda
-
-ENV PATH=/opt/miniconda/bin:$PATH
-
 RUN mkdir /app
 WORKDIR /app
 COPY pyproject.toml /tmp/train-conductor/pyproject.toml
 COPY README.md /tmp/train-conductor/README.md
 COPY train_conductor /tmp/train-conductor/train_conductor
 
-RUN python -m pip install /tmp/train-conductor
+RUN microdnf install -y python3.11 python3.11-pip
+RUN python3.11 -m pip install /tmp/train-conductor
 COPY runtime_config.yml /app
 
 RUN true \
@@ -26,4 +20,4 @@ RUN chown -R 1000:1000 /tmp/train-conductor
 
 USER 1000
 
-CMD [ "python", "-m", "train_conductor.grpc_server"]
+CMD [ "python3.11", "-m", "train_conductor.grpc_server"]
