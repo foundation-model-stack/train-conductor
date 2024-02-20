@@ -56,7 +56,7 @@ class TrainingServicer(trainconductor_pb2_grpc.TrainConductorServicer):
 
             param_dict["output_dir"] = (
                 request_dict.get("output_path") or self.config.trainer_config.output_dir
-            ) + "/" + job_id
+            ) + "/" + request_dict.get("model_name")
             params = json.dumps(param_dict, indent=4)
             request_dict.pop("parameters")
             request_dict.update(
