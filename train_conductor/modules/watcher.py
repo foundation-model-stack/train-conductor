@@ -190,11 +190,13 @@ class Watcher:
         )
         for pod in pods.items:
             pod_name = pod.metadata.name
-            pod_log = self.core_v1_api.read_namespaced_pod_log(
-                pod_name, self.target_namespace
-            )
-            logs += pod_log
-        print(logs)
+            try:
+                pod_log = self.core_v1_api.read_namespaced_pod_log(
+                    pod_name, self.target_namespace
+                )
+                logs += pod_log
+            except:
+                logging.debug("Could not retreive logs for pod " + pod_name)
         return logs
 
     def monitor_jobs(self, resource_version):
