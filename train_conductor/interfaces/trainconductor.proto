@@ -69,6 +69,8 @@ message TrainingParameters {
 
   optional bool overwrite_output_dir = 34;
   optional int32 num_gpus = 35;
+  optional string evaluation_strategy = 36;
+  optional string validation_data_path = 37;
 }
 
 message TrainingInfoRequest {
