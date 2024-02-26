@@ -56,14 +56,43 @@ class TrainingGRPCServer:
             # Finally enable service reflection after all services are added
             reflection.enable_server_reflection(service_names, self.server)
 
-            self.server.add_insecure_port("[::]:8085")
-            logging.info("Starting grpc server on port 8085")
+            if self.config.trainer_config.mtls and self.config.trainer_config.mtls.enabled:
+                server_credentials = self.generate_server_credentials(self.config.trainer_config.mtls)
+                self.server.add_secure_port('[::]:50051', server_credentials)
+                logging.info("Starting grpc server on secure port 50051")
+            else:
+                self.server.add_insecure_port("[::]:8085")
+                logging.info("Starting grpc server on port 8085")
 
             self.server.start()
 
         if not os.environ.get("DISABLE_WATCHER"):
             Watcher(self.config)
         self.server.wait_for_termination()
+
+
+    def generate_server_credentials(self, mtls_config):
+        error_check.file_check(mtls_config.server_cert)
+        error_check.file_check(mtls_config.key_cert)
+        error_check.file_check(mtls_config.ca_cert)
+
+        with open(mtls_config.server_cert, "rb") as f:
+            server_certificate = f.read()
+        with open(mtls_config.key_cert, "rb") as f:
+            server_private_key = f.read()
+
+        # Load CA certificate
+        with open(mtls_config.ca_cert, "rb") as f:
+            ca_certificate = f.read()
+
+        # Create server credentials
+        server_credentials = grpc.ssl_server_credentials(
+            [(server_private_key, server_certificate)],
+            root_certificates=ca_certificate,
+            require_client_auth=True  # This enables mTLS
+        )
+
+        return server_credentials
 
 
 if __name__ == "__main__":
