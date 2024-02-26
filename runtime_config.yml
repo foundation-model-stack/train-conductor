@@ -5,6 +5,11 @@ trainer_config:
   base_model_path: /data/
   tuning_image: sft-trainer
   image_pull_secrets: all-icr-io
+  mtls:
+    enabled: true
+    server_cert: server.crt
+    key_cert: server.key
+    ca_cert: ca.crt
   # Default resource allocation for a job, if unspecified
   default_resources:
     cpu: 1
