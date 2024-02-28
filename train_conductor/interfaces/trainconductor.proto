@@ -58,7 +58,7 @@ message TrainingParameters {
   optional int32 r = 25;
   optional int32 lora_alpha = 26;
   repeated string target_modules = 27;
-  optional float bias = 28;
+  optional string bias = 28;
   optional float lora_dropout = 29;
 
   /* PT */
